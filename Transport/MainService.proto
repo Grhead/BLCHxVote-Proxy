@@ -1,0 +1,155 @@
+syntax = "proto3";
+
+option go_package = "./";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+//import "google/protobuf/any.proto";
+
+service Contract {
+//  rpc BasicAuth() returns ();
+//  rpc BasicRegister() returns ();
+  rpc NewChain(NewChainRequest) returns (NewChainResponse);
+  rpc CallCreateVoters(CallCreateVotersRequest) returns (CallCreateVotersResponse);
+  rpc CallNewCandidate(CallNewCandidateRequest) returns (CallNewCandidateResponse);
+  rpc CallViewCandidates(CallViewCandidatesRequest) returns (CallViewCandidatesResponse);
+  rpc WinnersList(WinnersListRequest) returns (WinnersListResponse);
+  rpc SoloWinner(SoloWinnerRequest) returns (SoloWinnerResponse);
+  rpc ChainSize(ChainSizeRequest) returns (ChainSizeResponse);
+  rpc GetPartOfChain(GetPartOfChainRequest) returns (GetPartOfChainResponse);
+  rpc GetFullChain(google.protobuf.Empty) returns (GetFullChainResponse);
+  rpc AcceptNewUser(AcceptNewUserRequest) returns (AcceptNewUserResponse);
+  rpc AcceptLoadUser(AcceptLoadUserRequest) returns (AcceptLoadUserResponse);
+  rpc Vote(VoteRequest) returns (VoteResponse);
+}
+
+message NewChainRequest {
+  string master = 1;
+  int32 votesCount = 2;
+  google.protobuf.Timestamp limitTime = 3;
+}
+message NewChainResponse {
+  CreateHelp CreateHelpProto = 1;
+  //string error = 2;
+}
+message CreateHelp {
+  string Status = 1;
+}
+message CallCreateVotersRequest {
+  //google.protobuf.Any voter = 1;
+  string voter = 1;
+  string master = 2;
+}
+message CallCreateVotersResponse {
+  repeated BlockchainUser user = 1;
+  //string error = 2;
+}
+message BlockchainUser {
+  string Id = 1;
+  string PublicKey = 2;
+  bool IsUsed = 3;
+  string Affiliation = 4;
+}
+message CallViewCandidatesRequest {
+  string master = 1;
+}
+message CallViewCandidatesResponse {
+  repeated BlockchainElectionSubjects electionSubjects = 1;
+  //string error = 2;
+}
+message BlockchainElectionSubjects {
+  string Id = 1;
+  string PublicKey = 2;
+  string Description = 3;
+  string VotingAffiliation = 4;
+}
+message CallNewCandidateRequest {
+  string description = 1;
+  string affiliation = 2;
+}
+message CallNewCandidateResponse {
+  BlockchainElectionSubjects electionSubjects = 1;
+  //string error = 2;
+}
+message WinnersListRequest {
+  string master = 1;
+}
+message WinnersListResponse {
+  repeated ContractElectionsList electionList = 1;
+  //string error = 2;
+}
+message ContractElectionsList {
+  BlockchainElectionSubjects electionSubjects = 1;
+  string Balance = 2;
+}
+message SoloWinnerRequest {
+  string master = 1;
+}
+message SoloWinnerResponse {
+  ContractElectionsList soloWinnerObject = 1;
+  //string error = 2;
+}
+message ChainSizeRequest {
+  string master = 1;
+}
+message ChainSizeResponse {
+  string size = 1;
+  //string error = 2;
+}
+message GetPartOfChainRequest {
+  string master = 1;
+}
+message GetPartOfChainResponse {
+  repeated BlockchainBlock blocks = 1;
+  //string error = 2;
+}
+message BlockchainBlock {
+  string CurrHash = 1;
+  string PrevHash = 2;
+  google.protobuf.Timestamp TimeStamp = 3;
+  repeated BlockchainTransaction Transactions = 4;
+  map<string, int64> BalanceMap = 5;
+  int64 Nonce = 6;
+  int64 Difficulty = 7;
+  string ChainMaster = 8;
+}
+message BlockchainTransaction {
+  bytes RandBytes = 1;
+  string PrevBlock = 2;
+  string Sender = 3;
+  string Receiver = 4;
+  int64 Value = 5;
+  string Signature = 6;
+  string CurrHash = 7;
+}
+message GetFullChainResponse {
+  repeated BlockchainBlock blocks = 1;
+  //string error = 2;
+}
+message AcceptLoadUserRequest {
+  string publicKey = 1;
+  string privateKey = 2;
+}
+message AcceptLoadUserResponse {
+  BlockchainUser user = 1;
+  //string error = 2;
+}
+message AcceptNewUserRequest {
+  string pass = 1;
+  string salt = 2;
+  string publicKey = 3;
+}
+message AcceptNewUserResponse {
+  string privateKey = 1;
+  //string error = 2;
+}
+message VoteRequest {
+  string receiver = 1;
+  string sender = 2;
+  string master = 3;
+  int64 num = 4;
+}
+message VoteResponse {
+  string status = 1;
+  //string error = 2;
+}
