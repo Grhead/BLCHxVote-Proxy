@@ -22,28 +22,28 @@ type CallCreateVotersHelpRequest struct {
 	Auth   *AuthStruct `form:"auth" json:"auth"`
 }
 type CallCreateVotersHelpResponse struct {
-	User BlockchainUser `form:"User" json:"User"`
+	User BlockchainUser `form:"user" json:"User"`
 	Auth *AuthStruct    `form:"auth" json:"auth"`
 }
 type BlockchainUser struct {
-	Id          string `form:"Id" json:"Id"`
-	PublicKey   string `form:"PublicKey" json:"PublicKey"`
-	IsUsed      bool   `form:"IsUsed" json:"IsUsed"`
-	Affiliation string `form:"Affiliation" json:"Affiliation"`
+	Id          string `form:"id" json:"Id"`
+	PublicKey   string `form:"publicKey" json:"PublicKey"`
+	IsUsed      bool   `form:"isUsed" json:"IsUsed"`
+	Affiliation string `form:"affiliation" json:"Affiliation"`
 }
 type CallViewCandidatesHelpRequest struct {
 	Master string      `form:"master" json:"master"`
 	Auth   *AuthStruct `form:"auth" json:"auth"`
 }
 type CallViewCandidatesHelpResponse struct {
-	ElectionSubjects BlockchainElectionSubjects `form:"ElectionSubjects" json:"ElectionSubjects"`
+	ElectionSubjects BlockchainElectionSubjects `form:"electionSubjects" json:"ElectionSubjects"`
 	Auth             *AuthStruct                `form:"auth" json:"auth"`
 }
 type BlockchainElectionSubjects struct {
-	Id                string `form:"Id" json:"Id"`
-	PublicKey         string `form:"PublicKey" json:"PublicKey"`
-	Description       bool   `form:"Description" json:"Description"`
-	VotingAffiliation string `form:"VotingAffiliation" json:"VotingAffiliation"`
+	Id                string `form:"id" json:"Id"`
+	PublicKey         string `form:"publicKey" json:"PublicKey"`
+	Description       bool   `form:"description" json:"Description"`
+	VotingAffiliation string `form:"votingAffiliation" json:"VotingAffiliation"`
 }
 type CallNewCandidateHelpRequest struct {
 	Description string      `form:"description" json:"description"`
@@ -60,7 +60,7 @@ type AcceptLoadUserHelpRequest struct {
 	Auth       *AuthStruct `form:"auth" json:"auth"`
 }
 type AcceptLoadUserHelpResponse struct {
-	User BlockchainUser `form:"User" json:"User"`
+	User BlockchainUser `form:"user" json:"User"`
 	Auth *AuthStruct    `form:"auth" json:"auth"`
 }
 type AcceptNewUserHelpRequest struct {

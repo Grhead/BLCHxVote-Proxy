@@ -49,6 +49,7 @@ message BlockchainUser {
   string PublicKey = 2;
   bool IsUsed = 3;
   string Affiliation = 4;
+  string Pass = 5;
 }
 message CallViewCandidatesRequest {
   string master = 1;

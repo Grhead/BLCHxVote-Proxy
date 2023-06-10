@@ -5,6 +5,7 @@ import (
 	. "Vox2-Proxy/Transport/PBs"
 	"context"
 	"fmt"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	intersessions "github.com/gin-contrib/sessions/gorm"
 	"github.com/gin-gonic/gin"
@@ -38,8 +39,15 @@ func main() {
 	}
 	bindPort := viper.GetString("BIND_PORT")
 
-	store = intersessions.NewStore(db, true, []byte("secret"))
+	store = intersessions.NewStore(db, false, []byte("secret"))
 	router = gin.Default()
+	router.Use(cors.New(cors.Config{
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"PUT", "PATCH", "POST", "GET", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Authorization", "Content-Type", "Accept-Encoding"},
+		ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials", "Access-Control-Allow-Headers", "Access-Control-Allow-Methods"},
+		AllowCredentials: true,
+	}))
 	router.Use(sessions.Sessions("BaseSession", store))
 	router.POST("/check", GinCheck)
 	router.POST("/register", GinRegister)
@@ -74,16 +82,23 @@ func GinRegister(c *gin.Context) {
 		return
 	} else {
 		session := sessions.Default(c)
-		router.Use(sessions.Sessions(input.Login, store))
-		session.Set("pass", input.Password)
-		session.Set("login", input.Login)
-		errSave := session.Save()
-		if errSave != nil {
-			c.JSON(http.StatusBadRequest,
-				gin.H{"error": errSave.Error()})
-			return
+		log.Println(input.Login)
+		log.Println(input.Password)
+		if input.Password != "" && input.Login != "" && len(input.Password) >= 8 && len(input.Login) >= 8 && session.Get(input.Password) != "" {
+			router.Use(sessions.Sessions(input.Login, store))
+			session.Set("pass", input.Password)
+			session.Set("login", input.Login)
+			errSave := session.Save()
+			if errSave != nil {
+				c.JSON(http.StatusBadRequest,
+					gin.H{"error": errSave.Error()})
+				return
+			}
+			c.JSON(200, gin.H{"status": "Succeed"})
+		} else {
+			c.JSON(200, gin.H{"status": "Auth Error"})
 		}
-		c.JSON(200, gin.H{"Status": "Succeed"})
+
 	}
 }
 
@@ -95,7 +110,7 @@ func GinCheck(c *gin.Context) {
 		return
 	} else {
 		b := check(input, c)
-		c.JSON(200, gin.H{"Status": b})
+		c.JSON(200, gin.H{"status": b})
 	}
 }
 
@@ -118,9 +133,9 @@ func GinAcceptLoadUser(c *gin.Context) {
 					gin.H{"error": errGrpcClient.Error()})
 				return
 			}
-			c.JSON(200, gin.H{"AcceptLoadUserResponse": user})
+			c.JSON(200, gin.H{"acceptLoadUserResponse": user})
 		} else {
-			c.JSON(403, gin.H{"Status": "Access Denied"})
+			c.JSON(403, gin.H{"status": "Access Denied"})
 		}
 
 	}
@@ -146,9 +161,9 @@ func GinAcceptNewUser(c *gin.Context) {
 					gin.H{"error": errGrpcClient.Error()})
 				return
 			}
-			c.JSON(200, gin.H{"AcceptNewUserHelpResponse": privateKey})
+			c.JSON(200, gin.H{"acceptNewUserHelpResponse": privateKey})
 		} else {
-			c.JSON(403, gin.H{"Status": "Access Denied"})
+			c.JSON(403, gin.H{"status": "Access Denied"})
 		}
 
 	}
@@ -175,9 +190,9 @@ func GinVote(c *gin.Context) {
 					gin.H{"error": errGrpcClient.Error()})
 				return
 			}
-			c.JSON(200, gin.H{"Vote": status})
+			c.JSON(200, gin.H{"vote": status})
 		} else {
-			c.JSON(403, gin.H{"Status": "Access Denied"})
+			c.JSON(403, gin.H{"status": "Access Denied"})
 		}
 
 	}
@@ -201,9 +216,9 @@ func GinSoloWinner(c *gin.Context) {
 					gin.H{"error": errGrpcClient.Error()})
 				return
 			}
-			c.JSON(200, gin.H{"SoloWinnerObject": object})
+			c.JSON(200, gin.H{"soloWinnerObject": object})
 		} else {
-			c.JSON(403, gin.H{"Status": "Access Denied"})
+			c.JSON(403, gin.H{"status": "Access Denied"})
 		}
 
 	}
@@ -227,9 +242,9 @@ func GinWinnersList(c *gin.Context) {
 					gin.H{"error": errGrpcClient.Error()})
 				return
 			}
-			c.JSON(200, gin.H{"WinnersList": list})
+			c.JSON(200, gin.H{"winnersList": list})
 		} else {
-			c.JSON(403, gin.H{"Status": "Access Denied"})
+			c.JSON(403, gin.H{"status": "Access Denied"})
 		}
 
 	}
@@ -253,9 +268,9 @@ func GinViewCandidates(c *gin.Context) {
 					gin.H{"error": errGrpcClient.Error()})
 				return
 			}
-			c.JSON(200, gin.H{"CandidatesList": list})
+			c.JSON(200, gin.H{"candidatesList": list})
 		} else {
-			c.JSON(403, gin.H{"Status": "Access Denied"})
+			c.JSON(403, gin.H{"status": "Access Denied"})
 		}
 
 	}
@@ -282,7 +297,7 @@ func GinNewCandidates(c *gin.Context) {
 			}
 			c.JSON(200, gin.H{"electionsObject": candidate})
 		} else {
-			c.JSON(403, gin.H{"Status": "Access Denied"})
+			c.JSON(403, gin.H{"status": "Access Denied"})
 		}
 
 	}
@@ -309,7 +324,7 @@ func GinCallCreateVoters(c *gin.Context) {
 			}
 			c.JSON(200, gin.H{"voterObjects": voter})
 		} else {
-			c.JSON(403, gin.H{"Status": "Access Denied"})
+			c.JSON(403, gin.H{"status": "Access Denied"})
 		}
 
 	}
@@ -333,7 +348,7 @@ func GinGetFull(c *gin.Context) {
 			}
 			c.JSON(200, gin.H{"fullChain": chain})
 		} else {
-			c.JSON(403, gin.H{"Status": "Access Denied"})
+			c.JSON(403, gin.H{"status": "Access Denied"})
 		}
 
 	}
@@ -359,7 +374,7 @@ func GinGetPartOfChain(c *gin.Context) {
 			}
 			c.JSON(200, gin.H{"partOfChain": chain})
 		} else {
-			c.JSON(403, gin.H{"Status": "Access Denied"})
+			c.JSON(403, gin.H{"status": "Access Denied"})
 		}
 
 	}
@@ -374,7 +389,7 @@ func GinGetChainSize(c *gin.Context) {
 	} else {
 		b := check(input.Auth, c)
 		if b {
-			chain, errGrpcClient := grpcClient.GetPartOfChain(context.Background(), &GetPartOfChainRequest{
+			chain, errGrpcClient := grpcClient.ChainSize(context.Background(), &ChainSizeRequest{
 				Master: input.Master,
 			})
 			fmt.Println(errGrpcClient)
@@ -385,7 +400,7 @@ func GinGetChainSize(c *gin.Context) {
 			}
 			c.JSON(200, gin.H{"partOfChain": chain})
 		} else {
-			c.JSON(403, gin.H{"Status": "Access Denied"})
+			c.JSON(403, gin.H{"status": "Access Denied"})
 		}
 
 	}
@@ -413,7 +428,7 @@ func GinNewChain(c *gin.Context) {
 			}
 			c.JSON(200, gin.H{"partOfChain": chain})
 		} else {
-			c.JSON(403, gin.H{"Status": "Access Denied"})
+			c.JSON(403, gin.H{"status": "Access Denied"})
 		}
 
 	}
