@@ -4,12 +4,14 @@ import (
 	"Vox2-Proxy/Transport"
 	. "Vox2-Proxy/Transport/PBs"
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	intersessions "github.com/gin-contrib/sessions/gorm"
 	"github.com/gin-gonic/gin"
 	googleProtobuf "github.com/golang/protobuf/ptypes/empty"
+	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -21,6 +23,10 @@ import (
 
 type Store interface {
 	sessions.Store
+}
+type TableAuth struct {
+	Login    string
+	Password string
 }
 
 var router *gin.Engine
@@ -81,10 +87,20 @@ func GinRegister(c *gin.Context) {
 			gin.H{"error": err.Error()})
 		return
 	} else {
+		db, errGorm := gorm.Open(sqlite.Open("Database/AuthDB.db"), &gorm.Config{})
+		if errGorm != nil {
+			c.JSON(http.StatusBadRequest,
+				gin.H{"error": errGorm.Error()})
+			return
+		}
 		session := sessions.Default(c)
-		log.Println(input.Login)
-		log.Println(input.Password)
+		var AuthArray []*TableAuth
+		db.Raw("SELECT Login, Password FROM AuthDataTable").Scan(&AuthArray)
+		for _, v := range AuthArray {
+			fmt.Println(v)
+		}
 		if input.Password != "" && input.Login != "" && len(input.Password) >= 8 && len(input.Login) >= 8 && session.Get(input.Password) != "" {
+			db.Exec("INSERT INTO AuthDataTable VALUES ($1, $2, $3)", uuid.New().String(), HashSum(input.Login), HashSum(input.Password))
 			router.Use(sessions.Sessions(input.Login, store))
 			session.Set("pass", input.Password)
 			session.Set("login", input.Login)
@@ -436,11 +452,27 @@ func GinNewChain(c *gin.Context) {
 
 func check(input *Transport.AuthStruct, c *gin.Context) bool {
 	fmt.Println(input)
-	router.Use(sessions.Sessions(input.Login, store))
-	session := sessions.Default(c)
-	if session.Get("pass") == input.Password && session.Get("login") == input.Login {
+	db, errGorm := gorm.Open(sqlite.Open("Database/AuthDB.db"), &gorm.Config{})
+	if errGorm != nil {
+		return false
+	}
+	var AuthArray *TableAuth
+	db.Raw("SELECT Login, Password FROM AuthDataTable WHERE $1 = Login AND $2 = Password", HashSum(input.Login), HashSum(input.Password)).Scan(&AuthArray)
+	//router.Use(sessions.Sessions(input.Login, store))
+	//session := sessions.Default(c)
+	if AuthArray != nil {
 		return true
 	} else {
 		return false
 	}
+	//if session.Get("pass") == input.Password && session.Get("login") == input.Login {
+	//	return true
+	//} else {
+	//	return false
+	//}
+	return false
+}
+func HashSum(data string) string {
+	hash := sha256.Sum256([]byte(data))
+	return fmt.Sprintf("%x", hash[:])
 }
