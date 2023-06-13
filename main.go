@@ -19,6 +19,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type Store interface {
@@ -84,13 +85,13 @@ func GinRegister(c *gin.Context) {
 	var input *Transport.AuthStruct
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest,
-			gin.H{"error": err.Error()})
+			gin.H{"error": err})
 		return
 	} else {
 		db, errGorm := gorm.Open(sqlite.Open("Database/AuthDB.db"), &gorm.Config{})
 		if errGorm != nil {
 			c.JSON(http.StatusBadRequest,
-				gin.H{"error": errGorm.Error()})
+				gin.H{"error": errGorm})
 			return
 		}
 		session := sessions.Default(c)
@@ -107,7 +108,7 @@ func GinRegister(c *gin.Context) {
 			errSave := session.Save()
 			if errSave != nil {
 				c.JSON(http.StatusBadRequest,
-					gin.H{"error": errSave.Error()})
+					gin.H{"error": errSave})
 				return
 			}
 			c.JSON(200, gin.H{"status": "Succeed"})
@@ -122,7 +123,7 @@ func GinCheck(c *gin.Context) {
 	var input *Transport.AuthStruct
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest,
-			gin.H{"error": err.Error()})
+			gin.H{"error": err})
 		return
 	} else {
 		b := check(input, c)
@@ -134,26 +135,25 @@ func GinAcceptLoadUser(c *gin.Context) {
 	var input *Transport.AcceptLoadUserHelpRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest,
-			gin.H{"error": err.Error()})
+			gin.H{"error": err})
 		return
 	} else {
 		b := check(input.Auth, c)
 		if b {
 			user, errGrpcClient := grpcClient.AcceptLoadUser(context.Background(), &AcceptLoadUserRequest{
-				PublicKey:  input.PublicKey,
-				PrivateKey: input.PrivateKey,
+				PublicKey:  strings.ToLower(input.PublicKey),
+				PrivateKey: strings.ToLower(input.PrivateKey),
 			})
 			fmt.Println(errGrpcClient)
 			if errGrpcClient != nil {
 				c.JSON(500,
-					gin.H{"error": errGrpcClient.Error()})
+					gin.H{"error": errGrpcClient})
 				return
 			}
-			c.JSON(200, gin.H{"acceptLoadUserResponse": user})
+			c.JSON(200, gin.H{"acceptLoadUserResponse": user.User})
 		} else {
 			c.JSON(403, gin.H{"status": "Access Denied"})
 		}
-
 	}
 }
 
@@ -161,20 +161,20 @@ func GinAcceptNewUser(c *gin.Context) {
 	var input *Transport.AcceptNewUserHelpRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest,
-			gin.H{"error": err.Error()})
+			gin.H{"error": err})
 		return
 	} else {
 		b := check(input.Auth, c)
 		if b {
 			privateKey, errGrpcClient := grpcClient.AcceptNewUser(context.Background(), &AcceptNewUserRequest{
-				Pass:      input.Pass,
-				Salt:      input.Salt,
-				PublicKey: input.PublicKey,
+				Pass:      strings.ToLower(input.Pass),
+				Salt:      strings.ToLower(input.Salt),
+				PublicKey: strings.ToLower(input.PublicKey),
 			})
 			fmt.Println(errGrpcClient)
 			if errGrpcClient != nil {
 				c.JSON(500,
-					gin.H{"error": errGrpcClient.Error()})
+					gin.H{"error": errGrpcClient})
 				return
 			}
 			c.JSON(200, gin.H{"acceptNewUserHelpResponse": privateKey})
@@ -189,7 +189,7 @@ func GinVote(c *gin.Context) {
 	var input *Transport.VoteHelpRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest,
-			gin.H{"error": err.Error()})
+			gin.H{"error": err})
 		return
 	} else {
 		b := check(input.Auth, c)
@@ -203,7 +203,7 @@ func GinVote(c *gin.Context) {
 			fmt.Println(errGrpcClient)
 			if errGrpcClient != nil {
 				c.JSON(500,
-					gin.H{"error": errGrpcClient.Error()})
+					gin.H{"error": errGrpcClient})
 				return
 			}
 			c.JSON(200, gin.H{"vote": status})
@@ -218,7 +218,7 @@ func GinSoloWinner(c *gin.Context) {
 	var input *Transport.SoloWinnerHelpRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest,
-			gin.H{"error": err.Error()})
+			gin.H{"error": err})
 		return
 	} else {
 		b := check(input.Auth, c)
@@ -229,7 +229,7 @@ func GinSoloWinner(c *gin.Context) {
 			fmt.Println(errGrpcClient)
 			if errGrpcClient != nil {
 				c.JSON(500,
-					gin.H{"error": errGrpcClient.Error()})
+					gin.H{"error": errGrpcClient})
 				return
 			}
 			c.JSON(200, gin.H{"soloWinnerObject": object})
@@ -244,7 +244,7 @@ func GinWinnersList(c *gin.Context) {
 	var input *Transport.WinnersListHelpRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest,
-			gin.H{"error": err.Error()})
+			gin.H{"error": err})
 		return
 	} else {
 		b := check(input.Auth, c)
@@ -255,7 +255,7 @@ func GinWinnersList(c *gin.Context) {
 			fmt.Println(errGrpcClient)
 			if errGrpcClient != nil {
 				c.JSON(500,
-					gin.H{"error": errGrpcClient.Error()})
+					gin.H{"error": errGrpcClient})
 				return
 			}
 			c.JSON(200, gin.H{"winnersList": list})
@@ -270,7 +270,7 @@ func GinViewCandidates(c *gin.Context) {
 	var input *Transport.CallViewCandidatesHelpRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest,
-			gin.H{"error": err.Error()})
+			gin.H{"error": err})
 		return
 	} else {
 		b := check(input.Auth, c)
@@ -281,7 +281,7 @@ func GinViewCandidates(c *gin.Context) {
 			fmt.Println(errGrpcClient)
 			if errGrpcClient != nil {
 				c.JSON(500,
-					gin.H{"error": errGrpcClient.Error()})
+					gin.H{"error": errGrpcClient})
 				return
 			}
 			c.JSON(200, gin.H{"candidatesList": list})
@@ -296,7 +296,7 @@ func GinNewCandidates(c *gin.Context) {
 	var input *Transport.CallNewCandidateHelpRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest,
-			gin.H{"error": err.Error()})
+			gin.H{"error": err})
 		return
 	} else {
 		b := check(input.Auth, c)
@@ -308,10 +308,10 @@ func GinNewCandidates(c *gin.Context) {
 			fmt.Println(errGrpcClient)
 			if errGrpcClient != nil {
 				c.JSON(500,
-					gin.H{"error": errGrpcClient.Error()})
+					gin.H{"error": errGrpcClient})
 				return
 			}
-			c.JSON(200, gin.H{"electionsObject": candidate})
+			c.JSON(200, gin.H{" else ": candidate})
 		} else {
 			c.JSON(403, gin.H{"status": "Access Denied"})
 		}
@@ -323,7 +323,7 @@ func GinCallCreateVoters(c *gin.Context) {
 	var input *Transport.CallCreateVotersHelpRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest,
-			gin.H{"error": err.Error()})
+			gin.H{"error": err})
 		return
 	} else {
 		b := check(input.Auth, c)
@@ -335,10 +335,10 @@ func GinCallCreateVoters(c *gin.Context) {
 			fmt.Println(errGrpcClient)
 			if errGrpcClient != nil {
 				c.JSON(500,
-					gin.H{"error": errGrpcClient.Error()})
+					gin.H{"error": errGrpcClient})
 				return
 			}
-			c.JSON(200, gin.H{"voterObjects": voter})
+			c.JSON(200, gin.H{"voterObjects": voter.User, "identities": voter.Identifier})
 		} else {
 			c.JSON(403, gin.H{"status": "Access Denied"})
 		}
@@ -350,7 +350,7 @@ func GinGetFull(c *gin.Context) {
 	var input *Transport.AuthStruct
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest,
-			gin.H{"error": err.Error()})
+			gin.H{"error": err})
 		return
 	} else {
 		b := check(input, c)
@@ -359,7 +359,7 @@ func GinGetFull(c *gin.Context) {
 			fmt.Println(errGrpcClient)
 			if errGrpcClient != nil {
 				c.JSON(500,
-					gin.H{"error": errGrpcClient.Error()})
+					gin.H{"error": errGrpcClient})
 				return
 			}
 			c.JSON(200, gin.H{"fullChain": chain})
@@ -374,7 +374,7 @@ func GinGetPartOfChain(c *gin.Context) {
 	var input *Transport.PartOfChainRequestHelpRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest,
-			gin.H{"error": err.Error()})
+			gin.H{"error": err})
 		return
 	} else {
 		b := check(input.Auth, c)
@@ -385,7 +385,7 @@ func GinGetPartOfChain(c *gin.Context) {
 			fmt.Println(errGrpcClient)
 			if errGrpcClient != nil {
 				c.JSON(500,
-					gin.H{"error": errGrpcClient.Error()})
+					gin.H{"error": errGrpcClient})
 				return
 			}
 			c.JSON(200, gin.H{"partOfChain": chain})
@@ -400,7 +400,7 @@ func GinGetChainSize(c *gin.Context) {
 	var input *Transport.ChainSizeHelpRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest,
-			gin.H{"error": err.Error()})
+			gin.H{"error": err})
 		return
 	} else {
 		b := check(input.Auth, c)
@@ -411,7 +411,7 @@ func GinGetChainSize(c *gin.Context) {
 			fmt.Println(errGrpcClient)
 			if errGrpcClient != nil {
 				c.JSON(500,
-					gin.H{"error": errGrpcClient.Error()})
+					gin.H{"error": errGrpcClient})
 				return
 			}
 			c.JSON(200, gin.H{"partOfChain": chain})
@@ -426,7 +426,7 @@ func GinNewChain(c *gin.Context) {
 	var input *Transport.NewChainHelpRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest,
-			gin.H{"error": err.Error()})
+			gin.H{"error": err})
 		return
 	} else {
 		b := check(input.Auth, c)
@@ -436,12 +436,13 @@ func GinNewChain(c *gin.Context) {
 				VotesCount: input.Count,
 				LimitTime:  input.LimitTime,
 			})
-			fmt.Println(errGrpcClient)
+			log.Println("::", errGrpcClient)
 			if errGrpcClient != nil {
-				c.JSON(500,
-					gin.H{"error": errGrpcClient.Error()})
+				c.JSON(200,
+					gin.H{"error": errGrpcClient})
 				return
 			}
+			log.Println("::", "OOOROR")
 			c.JSON(200, gin.H{"partOfChain": chain})
 		} else {
 			c.JSON(403, gin.H{"status": "Access Denied"})
@@ -457,7 +458,10 @@ func check(input *Transport.AuthStruct, c *gin.Context) bool {
 		return false
 	}
 	var AuthArray *TableAuth
-	db.Raw("SELECT Login, Password FROM AuthDataTable WHERE $1 = Login AND $2 = Password", HashSum(input.Login), HashSum(input.Password)).Scan(&AuthArray)
+	db.Raw("SELECT Login, Password FROM AuthDataTable WHERE $1 = Login AND $2 = Password",
+		HashSum(input.Login),
+		HashSum(input.Password)).
+		Scan(&AuthArray)
 	//router.Use(sessions.Sessions(input.Login, store))
 	//session := sessions.Default(c)
 	if AuthArray != nil {
@@ -470,7 +474,6 @@ func check(input *Transport.AuthStruct, c *gin.Context) bool {
 	//} else {
 	//	return false
 	//}
-	return false
 }
 func HashSum(data string) string {
 	hash := sha256.Sum256([]byte(data))

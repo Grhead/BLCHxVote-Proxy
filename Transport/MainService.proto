@@ -42,6 +42,7 @@ message CallCreateVotersRequest {
 }
 message CallCreateVotersResponse {
   repeated BlockchainUser user = 1;
+  repeated string identifier= 2;
   //string error = 2;
 }
 message BlockchainUser {
@@ -49,7 +50,7 @@ message BlockchainUser {
   string PublicKey = 2;
   bool IsUsed = 3;
   string Affiliation = 4;
-  string Pass = 5;
+  // string Pass = 5;
 }
 message CallViewCandidatesRequest {
   string master = 1;
