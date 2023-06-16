@@ -108,3 +108,11 @@ type ChainSizeHelpRequest struct {
 	Master string      `form:"master" json:"master"`
 	Auth   *AuthStruct `form:"auth" json:"auth"`
 }
+type HistoryRequest struct {
+	Master string      `form:"master" json:"master"`
+	Auth   *AuthStruct `form:"auth" json:"auth"`
+}
+type HistoryResponse struct {
+	Master string      `form:"master" json:"master"`
+	Auth   *AuthStruct `form:"auth" json:"auth"`
+}
